@@ -1,0 +1,65 @@
+{
+  "manifest": {
+    "name": "vue-in-viewport-mixin",
+    "version": "2.0.0",
+    "description": "Vue 2 mixin to determine when a DOM element is visible in the client window",
+    "main": "index.js",
+    "scripts": {
+      "test": "cypress run",
+      "build": "coffee -ct index.coffee",
+      "version": "npm run build && git add -A",
+      "postversion": "git push --follow-tags && yarn storybook:deploy",
+      "storybook": "start-storybook -p 6006",
+      "storybook:build": "build-storybook",
+      "storybook:deploy": "storybook-to-ghpages"
+    },
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/BKWLD/vue-in-viewport-mixin.git"
+    },
+    "author": {
+      "name": "info@bukwild.com"
+    },
+    "license": "MIT",
+    "bugs": {
+      "url": "https://github.com/BKWLD/vue-in-viewport-mixin/issues"
+    },
+    "homepage": "https://github.com/BKWLD/vue-in-viewport-mixin#readme",
+    "peerDependencies": {
+      "vue": "2.x"
+    },
+    "devDependencies": {
+      "@babel/core": "^7.4.3",
+      "@babel/preset-env": "^7.4.3",
+      "@storybook/addon-knobs": "^5.0.6",
+      "@storybook/addons": "^5.0.6",
+      "@storybook/storybook-deployer": "^2.8.1",
+      "@storybook/vue": "^5.0.6",
+      "babel-loader": "^8.0.5",
+      "babel-preset-vue": "^2.0.2",
+      "coffee-loader": "^0.9.0",
+      "coffeescript": "^2.4.1",
+      "cypress": "^3.2.0",
+      "intersection-observer": "^0.5.1",
+      "vue": "^2.6.10",
+      "vue-loader": "^15.7.0",
+      "vue-template-compiler": "^2.6.10"
+    },
+    "dependencies": {},
+    "_registry": "npm",
+    "_loc": "/home/nel/.cache/yarn/v1/npm-vue-in-viewport-mixin-2.0.0-bcfa52a225641a6b3db5704921f8af2471c92c56/package.json",
+    "readmeFilename": "README.md",
+    "readme": "# Vue In Viewport Mixin [![Build Status](https://travis-ci.org/BKWLD/vue-in-viewport-mixin.svg?branch=master)](https://travis-ci.org/BKWLD/vue-in-viewport-mixin)\n\nVue 2 mixin to determine when a DOM element is visible in the client window by updating Vue data values using the [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserver).  You can then use those data values to do things like trigger transitions.\n\nYou may want to check out the directive vesion of this package: [vue-in-viewport-directive](https://github.com/BKWLD/vue-in-viewport-directive).\n\nDemo: https://bkwld.github.io/vue-in-viewport-mixin\n\n# Install\n\nThis package depends on the [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserver) API which needs a polyfill for old browsers, including all of IE.  Consider using the [W3C IntersectionObserver polyfill](https://github.com/w3c/IntersectionObserver/tree/master/polyfill).\n\n\n## Usage\n\n* Just require the mixin from your component and use it with `watch`:\n\t```js\n\tinViewport = require('vue-in-viewport-mixin');\n\tmodule.exports = {\n\t\tmixins: [ inViewport ],\n\t\twatch: {\n\t\t\t'inViewport.now': function(visible) {\n\t\t\t\tconsole.log('This component is '+( visible ? 'in-viewport' : 'hidden'));\n\t\t\t}\n\t\t}\n\t}\n\t```\n\n* Use the optional offset props to configure the component:\n\t```html\n\t<large-copy\n\t\t:in-viewport-root-margin='-50% 0%'\n\t\t:in-viewport-once='true'>\n\t</large-copy>\n\t```\n\n* Use data values _within_ your component to trigger transitions (or do other things):\n\t```html\n\t<div class='.large-copy'>\n\t\t<transition name='fade'>\n\t\t\t<h1 v-show='inViewport.now'>{{ copy.title }}</h1>\n\t\t</transition>\n\t</div>\n\t```\n\t\n* It's worth nothing that the IntersectionObserver counts an element as intersecting the viewport when it's top offset is equal to the height of height of the page.  For instance, if you have an element with `margin-top: 100vh`, that actually counts as intersecting and this mixin will have `inViewport.now == true`.\n\n## Props\n\n- `in-viewport-active (true)` - Whether to listen update the mixin data.  Setting to `false` later in the lifecyle will remove listeners and setting back to `true` will re-apply listeners.\n\n- `in-viewport-once (false)` - Whether to remove listeners once the component enters viewport.  If the component is in viewport when mounted, listeners are never added.\n\n- `in-viewport-root-margin (0px 0px -1px 0px)` - Specify the [IntersectionObserver rootMargin](https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserver/IntersectionObserver#Parameters).  For example, set to \"-20% 0%\" to delay the `inViewport.now` from switching state until your component is 20% of the viewport height into the page. This defaults to `0px 0px -1px 0px` so that a target that is positioned at `100vh` registers as not in viewport.\n\n- `in-viewport-root` - Specify the [IntersectionObserver root](https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserver/IntersectionObserver#Parameters).  Defaults to the browser viewport.\n\n- `in-viewport-threshold ([0,1])` - Specify the [IntersectionObserver threshold](https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserver/IntersectionObserver#Parameters).  The defaults should work for most cases.\n\n## Data\n\nThe whole point of this package is for you to make use of this data to do stuff. The following describes the data that is mixed into your component.  Note that all properties are namespaced under `inViewport`.\n\n```js\ndata: {\n\tinViewport: {\n\t\tnow: Boolean   // Is some part of the component currently in the viewport?\n\t\tfully: Boolean // Is the component completely in the viewport?\n\t\tabove: Boolean // Is any part of the component above the viewport?\n\t\tbelow: Boolean // Is any part of the component below the viewport?\n\t}\n}\n```\n\n## Tests\n\n1. Start Storybook: `yarn storybook`\n2. Open Cypress: `yarn cypress open`\n\nThe Travis tests that run on deploy run against [the demo site](https://bkwld.github.io/vue-in-viewport-mixin) which gets updated as part of the `npm version` commands.",
+    "licenseText": "The MIT License (MIT)\n\nCopyright (c) 2015 BKWLD\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n\n"
+  },
+  "artifacts": [],
+  "remote": {
+    "resolved": "https://github.com/BKWLD/vue-in-viewport-mixin#bcfa52a225641a6b3db5704921f8af2471c92c56",
+    "type": "git",
+    "reference": "https://github.com/BKWLD/vue-in-viewport-mixin",
+    "hash": "bcfa52a225641a6b3db5704921f8af2471c92c56",
+    "registry": "npm"
+  },
+  "registry": "npm",
+  "hash": "bcfa52a225641a6b3db5704921f8af2471c92c56"
+}
